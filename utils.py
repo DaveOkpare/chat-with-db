@@ -4,22 +4,22 @@ from pydantic import Field
 from sqlalchemy import create_engine
 import json
 from sqlalchemy import inspect
+from typing import Optional
 
 
 class Query(OpenAISchema):
     """
     Class representing an SQL schema and a question.
     Each query should contain a syntax.
-    Return "None" if no syntax for language.
     """
-    sql: str = Field(..., description="SQL syntax to query the schema")
-    python: str = Field(..., description="Python syntax to query the schema")
-    golang: str = Field(..., description="Golang syntax to query the schema")
-    javascript: str = Field(..., description="JavaScript syntax to query the schema")
-    dart: str = Field(..., description="Dart syntax to query the schema")
+    sql: Optional[str] = Field(None, description="SQL syntax to query the schema")
+    python: Optional[str] = Field(None, description="Python syntax to query the schema")
+    golang: Optional[str] = Field(None, description="Golang syntax to query the schema")
+    javascript: Optional[str] = Field(None, description="JavaScript syntax to query the schema")
+    dart: Optional[str] = Field(None, description="Dart syntax to query the schema")
 
 
-def ask_ai(schema: str, request: str, database: str, languages: str):
+def ask_ai(schema: str, prompt: str, database: str, languages: str):
     completion = openai.ChatCompletion.create(
         model="gpt-3.5-turbo-0613",
         temperature=0.2,
@@ -29,12 +29,13 @@ def ask_ai(schema: str, request: str, database: str, languages: str):
         messages=[
             {
                 "role": "system",
-                "content": f"You are a world class algorithm to generate correct SQL syntax on a given schema."
+                "content": f"You are a world class algorithm to generate correct syntax to query on a given schema."
             },
             {"role": "user", "content": f"Answer request using the following context. "
-                                        f"If no Languages mentioned, only generate SQL syntax."},
+                                        f"If no Languages mentioned, only generate SQL syntax."
+                                        f"Do NOT return Languages not mentioned."},
             {"role": "user", "content": f"Schema: \n {schema}"},
-            {"role": "user", "content": f"Request: {request}"},
+            {"role": "user", "content": f"Request: {prompt}"},
             {"role": "user", "content": f"Database: {database}"},
             {"role": "user", "content": f"Languages: {languages}"},
         ],

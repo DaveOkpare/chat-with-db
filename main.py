@@ -1,3 +1,5 @@
+import re
+
 import openai
 import streamlit as st
 
@@ -44,10 +46,18 @@ def get_text():
     return input_text
 
 
+def split_syntax(code):
+    pattern = r"(\w+)\s*=\s*'([^']*)'"
+    print(type(code))
+    matches = re.findall(pattern, str(code))
+    language_code_map = {language: value for language, value in matches}
+    return language_code_map
+
+
 def generate_response(prompt, languages):
     _schema = st.session_state['schema']
     db_url = st.session_state['database']
-    _response = ask_ai(_schema, prompt, db_url)
+    _response = ask_ai(schema=_schema, prompt=prompt, database=db_url, languages=languages)
     return _response
 
 
@@ -56,6 +66,23 @@ with input_container:
 
 with response_container:
     if user_input:
-        syntax, description = generate_response(user_input)
-        st.code(syntax[1], language="sql")
-        st.markdown(description[1])
+        options = st.multiselect('Choose your languages',
+                                 ['SQL', 'Python', 'Golang', 'JavaScript', 'Dart'],
+                                 None, )
+        if options:
+            syntax = generate_response(user_input, str(options))
+            if syntax.sql:
+                st.caption("SQL")
+                st.code(syntax.sql, language="sql")
+            if syntax.python:
+                st.caption("Python")
+                st.code(syntax.python, language="python")
+            if syntax.javascript:
+                st.caption("JavaScript")
+                st.code(syntax.javascript, language="javascript")
+            if syntax.golang:
+                st.caption("Golang")
+                st.code(syntax.golang, language="golang")
+            if syntax.dart:
+                st.caption("Dart")
+                st.code(syntax.dart, language="dart")
